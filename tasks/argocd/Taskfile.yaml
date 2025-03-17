@@ -1,0 +1,177 @@
+# https://taskfile.dev
+
+version: "3"
+
+includes:
+  utils: ../utils
+
+tasks:
+  login:
+    desc: "Login to ArgoCD."
+    deps:
+      - task: check-tools
+    requires:
+      vars:
+        - ARGOCD_SERVER
+    vars:
+      ARGOCD_USER:
+        sh: gum input --placeholder="Please input your ARGOCD USER and press [ENTER]"
+      ARGOCD_PASSWORD:
+        sh: gum input --password --placeholder="Please input your ARGOCD PASSWORD and press [ENTER]"
+    cmds:
+      - cmd: argocd login {{.ARGOCD_SERVER}} --username {{.ARGOCD_USER}} --password {{.ARGOCD_PASSWORD}} --grpc-web
+
+  bootstrap:
+    desc: "Initial deployment of ArgoCD and its required secrets."
+    summary: |
+      This will run kubectl against the currently configured cluster and deploy ArgoCD with a
+      preconfigured set of credentials and repositoris. Once ArgoCD is up it will take over it's
+      own management. This command is idempotent and can be used to restore ArgoCD as long as
+      we have access to it's git repository.
+    requires:
+      vars:
+        - ARGOCD_BOOTSTRAP_DIR
+        - ARGOCD_REPO_ACCESS_TOKEN
+    dir: "{{.ARGOCD_BOOTSTRAP_DIR}}"
+    cmds:
+      - cmd: gum log --level info $(kubectl apply -f namespace.yaml)
+      - task: create-repo-credentials-secret
+        vars:
+          ARGOCD_REPO_ACCESS_TOKEN_USER: "{{.ARGOCD_REPO_ACCESS_TOKEN_USER}}"
+          ARGOCD_REPO_ACCESS_TOKEN: "{{.ARGOCD_REPO_ACCESS_TOKEN}}"
+
+      # Initial apply will fail because of some missing CRDs
+      - cmd: gum spin --title "Applying initial ArgoCD manifests..." -- kubectl apply --server-side --force-conflicts -k ./
+        ignore_error: true
+
+      - task: utils:wait-for
+        vars:
+          GUM_SPIN_TITLE: "Waiting for ArgoCD's CRDs to be established..."
+          CONDITION: established
+          RESOURCE: "crds/applications.argoproj.io crds/applicationsets.argoproj.io crds/appprojects.argoproj.io"
+          NAMESPACE: argocd
+
+      - task: utils:wait-for
+        vars:
+          GUM_SPIN_TITLE: "Waiting for ArgoCD's Application controller to become ready..."
+          CONDITION: ready
+          RESOURCE: pod/argocd-application-controller-0
+          NAMESPACE: argocd
+
+      # let this one fail too because of service monitors. Will fix itself after the applicationsets
+      # have been applied.
+      - cmd: gum spin --title "Final ArgoCD manifests application..." -- kubectl apply --server-side --force-conflicts -k ./
+        ignore_error: true
+
+  cluster-add:
+    desc: "Add a downstream cluster to ArgoCD."
+    deps:
+      - task: check-tools
+    requires:
+      vars:
+        - DOWNSTREAM_CTX
+        - ARGOCD_SERVER
+    cmds:
+      - cmd: argocd cluster add "{{.DOWNSTREAM_CTX}}" --server "{{.ARGOCD_SERVER}}" {{.EXTRA_FLAGS}}
+
+  create-repo-credentials-secret:
+    desc: "Deploy Gitlab credentials to ArgoCD namespace."
+    summary: |
+      Uses ARGOCD_REPO_ACCESS_TOKEN (requires developer role with `read_repository` scope) to create
+      'gitlab-credentials' kubernetes secret for ArgoCD. Uses current kubeconfig context.
+    deps:
+      - task: check-tools
+    requires:
+      vars:
+        - ARGOCD_REPO_ACCESS_TOKEN_USER
+        - ARGOCD_REPO_ACCESS_TOKEN
+    cmds:
+      - task: utils:wait-for
+        vars:
+          GUM_SPIN_TITLE: "Waiting for the argocd namespace to be created..."
+          RESOURCE: namespace/argocd
+          CONDITION: exists
+      - cmd: |
+          gum log --level info $(kubectl apply -f -) <<EOF
+            apiVersion: v1
+            kind: Secret
+            metadata:
+              name: git-credentials
+              namespace: argocd
+              labels:
+                argocd.argoproj.io/secret-type: repo-creds
+            stringData:
+              url: https://github.com/fullstaq-labs/argocd-training.git
+              username: {{.ARGOCD_REPO_ACCESS_TOKEN_USER}}
+              password: {{.ARGOCD_REPO_ACCESS_TOKEN}}
+          EOF
+
+  join-local-cluster:
+    internal: true
+    desc: "Adds a local k3d cluster to ArgoCD."
+    deps:
+      - task: check-tools
+    requires:
+      vars: [K3D_CONFIG]
+    status:
+      - if [[ "{{.K3D_CONFIG}}" == '' ]]; then exit 0; else exit 1; fi
+    vars:
+      CLUSTER_NAME:
+        sh: if [[ "{{.K3D_CONFIG}}" != '' ]]; then yq '.metadata.name' '{{.K3D_CONFIG}}'; fi
+      CLUSTER_IP:
+        sh: |
+          if [[ "{{.K3D_CONFIG}}" != '' ]]; then
+            kubectl --context k3d-{{.CLUSTER_NAME}} get nodes \
+              -l node-role.kubernetes.io/control-plane \
+              -o jsonpath='{.items[0].metadata.annotations.k3s\.io/internal-ip}'
+          fi
+    cmds:
+      - cmd: |
+          kubectl --context k3d-{{.CLUSTER_NAME}} apply -f - <<EOF
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: cluster-info
+              namespace: kube-public
+            data:
+              kubeconfig: |
+                clusters:
+                - cluster:
+                    server: https://{{.CLUSTER_IP}}:6443
+          EOF
+
+      - task: utils:until-succeeds
+        vars:
+          GUM_SPIN_TITLE: "Waiting for ArgoCD connectivity..."
+          SHELL_COMMAND: "argocd version --server argocd.localhost --insecure --grpc-web"
+
+      - task: cluster-add
+        vars:
+          DOWNSTREAM_CTX: "k3d-{{.CLUSTER_NAME}}"
+          ARGOCD_SERVER: "argocd.localhost"
+          EXTRA_FLAGS: "--upsert --yes --insecure --grpc-web --cluster-endpoint kube-public"
+
+  enable-app-autosync:
+    internal: true
+    requires:
+      vars:
+        - ARGOCD_APPLICATION
+    status:
+      - test "$(kubectl get applications/{{.ARGOCD_APPLICATION}} -n argocd -o jsonpath='{.spec.syncPolicy.automated}')"
+    cmds:
+      - cmd: |
+          kubectl patch applications/{{.ARGOCD_APPLICATION}} \
+            --namespace argocd \
+            --type json \
+            --patch '[{"op":"add","path":"/spec/syncPolicy/automated","value":{"prune":true,"selfHeal":true}}]'
+
+  check-tools:
+    preconditions:
+      - sh: command -v argocd > /dev/null
+        msg: "Make sure argocd is installed and in your path (https://argo-cd.readthedocs.io/en/stable/cli_installation/)."
+      - sh: command -v kubectl > /dev/null
+        msg: "Make sure kubectl is installed and in your path."
+      - sh: command -v gum > /dev/null
+        msg: "Make sure gum is installed and in your path (https://github.com/charmbracelet/gum)"
+      - sh: command -v yq > /dev/null
+        msg: "Make sure yq is installed and in your path (https://github.com/mikefarah/yq)"

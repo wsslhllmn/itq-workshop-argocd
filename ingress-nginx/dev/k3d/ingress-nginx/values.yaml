@@ -1,0 +1,6 @@
+includeCRDs: true
+controller:
+  service:
+    nodePorts:
+      http: "32080"
+      https:  "31443"

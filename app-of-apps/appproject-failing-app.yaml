@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: appproject-failing-app
+  labels:
+    application: appproject-failing-app
+spec:
+  project: developer
+  source:
+    repoURL: https://github.com/argoproj/argocd-example-apps.git
+    targetRevision: master
+    path: guestbook
+  destination:
+    namespace: example-developer
+    name: in-cluster
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

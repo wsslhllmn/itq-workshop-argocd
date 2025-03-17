@@ -1,0 +1,40 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: argocd
+
+replicas:
+# we don't need it. Auth through DEX is disabled. We use google OIDC directly.
+- name: argocd-dex-server
+  count: 0
+
+resources:
+- namespace.yaml
+- https://github.com/argoproj/argo-cd//manifests/cluster-install?ref=v2.12.6
+- argocd.ingress.yaml
+- github.repository.yaml
+- ./appprojects/
+- ./appsets/
+
+configMapGenerator:
+  - name: argocd-cmd-params-cm
+    behavior: merge
+    literals:
+      - server.insecure=true
+      - server.disable.auth=true
+  - name: argocd-rbac-cm
+    behavior: merge
+    files:
+      - policy.csv=config/policy.csv
+    literals:
+      - policy.default=role:readonly
+
+  - name: argocd-cm
+    behavior: merge
+    literals:
+      # this option is required to be able to use the helmCharts field in kustomization.yaml files.
+      - kustomize.buildOptions=--enable-helm
+      # switches argocd's application resource tracking from label based to annotation based. This
+      # avoids some clashing with the different uses of the `app.kubernetes.io/instance` label.
+      # I'm looking at you kube-prometheus-stack helm chart's ServiceMonitors!
+      - application.resourceTrackingMethod=annotation

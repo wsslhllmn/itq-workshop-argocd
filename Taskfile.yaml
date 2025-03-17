@@ -1,0 +1,178 @@
+# https://taskfile.dev
+version: "3"
+
+includes:
+  k3d:
+    taskfile: tasks/k3d
+    internal: true
+  argocd:
+    taskfile: tasks/argocd
+    internal: true
+
+  utils:
+    taskfile: tasks/utils
+    internal: true
+
+  dev:
+    taskfile: tasks/dev
+    internal: true
+
+dotenv: [".envrc", ".env"]
+
+vars:
+  # determines what type of local cluster gets deployed.
+  # Currently the only options are "kind" or "k3d"
+  CLUSTER_TYPE: '{{ .CLUSTER_TYPE | default "k3d" }}'
+
+interval: 500ms
+
+silent: true
+
+tasks:
+  default: task --list
+
+  up:
+    desc: "Deploy entire local development environment."
+    vars:
+      PERSONAL_ACCESS_TOKEN_USER:
+        sh: gum input --header "What is your Github username?"
+      PERSONAL_ACCESS_TOKEN:
+        sh: gum input --header "What is your Github personal access token?" --password
+    cmds:
+      - task: dev:up
+        vars:
+          PERSONAL_ACCESS_TOKEN_USER: "{{.PERSONAL_ACCESS_TOKEN_USER}}"
+          PERSONAL_ACCESS_TOKEN: "{{.PERSONAL_ACCESS_TOKEN}}"
+          ARGOCD_REPO_URL: https://github.com/fullstaq-labs/argocd-training
+          ARGOCD_BOOTSTRAP_DIR: argocd/dev/k3d/argocd
+
+  destroy:
+    desc: "Destroy entire local development environment."
+    aliases: [down, destroy, get-rekt]
+    cmds:
+      - task: dev:destroy
+
+  prd.join-downstream-cluster:
+    desc: "Adds a cluster to management ArgoCD."
+    # TODO: add summary for documentation purposes.
+    summary: |
+      This task will guide you to join a cluster to the ArgoCD instance running in the management
+      cluster. The only requirements are:
+        - ArgoCD admin access
+        - cluster-admin access on the downstream cluster
+        - some tools that this task will check for but these are all provided in the dev container.
+    deps:
+      - task: argocd:check-tools
+    vars:
+      ARGOCD_SERVER: "argocd.mgmt.REPLACE_ME.dev"
+    cmds:
+      - cmd: echo "First Login to the ArgoCD server you want to add a cluster to..."
+      - task: argocd:login
+        vars:
+          ARGOCD_SERVER: "{{.ARGOCD_SERVER}}"
+      - cmd: echo "Which cluster do you want to add?"
+      - task: argocd:cluster-add
+        vars:
+          DOWNSTREAM_CTX:
+            sh: |
+              CONTEXTS=$(kubectl config get-contexts -o name)
+              CONTEXTS="$CONTEXTS\nSpecify kubeconfig path/file"
+              CHOICE=$(echo -e $CONTEXTS | gum choose)
+              if [ "$CHOICE" = "Specify kubeconfig path/file" ]; then
+                KUBECONFIG_PATH=$(gum input --prompt "Enter the path to your kubeconfig file:")
+                echo $KUBECONFIG_PATH > /tmp/kubeconfig_path.txt
+                export KUBECONFIG=$KUBECONFIG_PATH
+                gum choose $(kubectl config get-contexts -o name)
+              else
+                echo $CHOICE
+              fi
+          ARGOCD_SERVER: "{{.ARGOCD_SERVER}}"
+          EXTRA_FLAGS:
+            sh: |
+              FLAGS="--upsert --yes --grpc-web"
+              if [ -f /tmp/kubeconfig_path.txt ]; then
+                KUBECONFIG_PATH="--kubeconfig $(cat /tmp/kubeconfig_path.txt)"
+                FLAGS="$FLAGS $KUBECONFIG_PATH"
+              fi
+              echo "$FLAGS"
+
+  prd.bootstrap-cluster:
+    desc: "Initial deployment of ArgoCD and its apps to production."
+    summary: |
+      ARGOCD_REPO_ACCESS_TOKEN:
+        This token is used by ArgoCD to watch repositories for changes.
+        ArgoCD needs the `Developer` role with `read_repository` scope privileges.
+    vars:
+      CURRENT_CONTEXT:
+        sh: "kubectl config current-context"
+      ARGOCD_REPO_ACCESS_TOKEN:
+        sh: gum input --prompt="ARGOCD_REPO_ACCESS_TOKEN > " --password --placeholder="Please input your ARGOCD_REPO_ACCESS_TOKEN and press [ENTER] (read summary for more info)"
+    prompt: This will bootstrap ArgoCD using the context {{.CURRENT_CONTEXT}}... Do you want to continue?
+    cmds:
+      - task: argocd:bootstrap
+        vars:
+          ARGOCD_BOOTSTRAP_DIR: argocd/prd/dkn-mgmt-nl-ams-01/argocd
+          ARGOCD_REPO_ACCESS_TOKEN: "{{.ARGOCD_REPO_ACCESS_TOKEN}}"
+
+  switch:
+    desc: "Switches the branch that the mgmt ApplicationSet tracks in git."
+    cmds:
+      - task: dev:switch
+        vars:
+          REVISION:
+            sh: "{{if .REVISION}} echo {{.REVISION | quote}} {{else}} git branch --show-current {{end}}"
+
+  sync-local:
+    desc: "This task watches local changes in the service directory and applies them to the local cluster."
+    cmds:
+      - task: dev:sync-local
+
+  sync:
+    desc: "This task triggers a normal sync for one or more services."
+    cmds:
+      - task: dev:sync-apps
+
+  sync-all:
+    desc: "This task triggers a sync for all services."
+    cmds:
+      - task: dev:sync-all-apps
+
+  sync-profiles:
+    desc: "Sync a pre-defined selection of applications."
+    cmds:
+      - task: dev:sync-profiles
+
+  bootstrap-eso:
+    desc: "Bootstrap external secrets operator for a chosen cluster"
+    summary: |
+      GitLab Access Token:
+        The access token is used to read 'secrets' defined in a projects CI/CD settings > variables.
+        The access token requires the `read_api` scope and the `Maintainer` role if the token is
+        part of a Project, and the `Owner` role if it's part of a Group.
+    vars:
+      TARGET_CLUSTER:
+        sh: |
+          K8S_CONTEXTS=$(kubectl config get-contexts -o name)
+          [[ -z "$K8S_CONTEXTS" ]] || echo "$K8S_CONTEXTS" | gum filter --header="Select the target cluster: "
+      GITLAB_ESO_SECRET:
+        sh: 'gum input --password --header="Input GitLab Access Token: " --placeholder="Please input your GitLab access token and press [ENTER] (read summary for more info)"'
+    prompt: This will create/update the external secrets operator's GitLab access token in {{.TARGET_CLUSTER | default "'WARNING - NO CONTEXT SELECTED'"}}... Do you want to continue?
+    cmds:
+      # sanity check
+      - cmd: '[[ -n "{{.TARGET_CLUSTER}}" ]] && [[ -n "{{.GITLAB_ESO_SECRET}}" ]] || (echo "o GitLab access token provided or no target cluster defined. Have you put the target cluster configuration in {{.KUBECONFIG | default "~/.kube/config"}}?" && exit 1)'
+      - task: utils:wait-for
+        vars:
+          GUM_SPIN_TITLE: "Waiting for external-secrets namespace to be created..."
+          KUBECONTEXT: "{{.TARGET_CLUSTER}}"
+          RESOURCE: namespaces/external-secrets
+          CONDITION: exists
+      - |
+        kubectl --context {{.TARGET_CLUSTER}} apply -f - <<EOF
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: gitlab-eso-secret
+            namespace: external-secrets
+          stringData:
+            token: {{.GITLAB_ESO_SECRET}}
+        EOF

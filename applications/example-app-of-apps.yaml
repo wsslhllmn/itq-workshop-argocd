@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-of-apps
+  labels:
+    application: app-of-apps
+spec:
+  project: customer
+  source:
+    repoURL: <YourForkedRepositoryHere>
+    targetRevision: <PathToYourForkedBranch>
+    path: app-of-apps
+  destination:
+    namespace: argocd
+    name: in-cluster
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

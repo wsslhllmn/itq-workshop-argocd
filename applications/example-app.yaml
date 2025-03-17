@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: guestbook
+  labels:
+    application: guestbook
+spec:
+  project: customer
+  source:
+    repoURL: <YourRepositoryHere>
+    targetRevision: <PathToYourBranch>
+    path: <PathToYourApp>
+  destination:
+    namespace: example-namespace
+    name: in-cluster
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
