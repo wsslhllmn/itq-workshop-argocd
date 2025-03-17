@@ -17,7 +17,7 @@ Repository that holds the contents for an ArgoCD training.
      Open the folder where you've cloned the repo locally in Visual Studio Code and follow the instructions from the image below.\
      ![instructions local vscode](./.docs/vscode-local.gif)
    * Go to repository you've forked in GitHub and open Codespaces (follow the instructions from the image below).\
-        ![instructions remote vscode](./.docs/remote-vscode.gif)
+        ![instructions remote vscode](./.docs/codespaces-demo.gif)
         > [!IMPORTANT]\
         > If you've used the GitHub Codespaces, be sure to close the codespace after the training.\
         > Otherwise you could be billed by GitHub for the use of Codespaces
