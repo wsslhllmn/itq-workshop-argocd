@@ -249,7 +249,7 @@ Repository that holds the contents for an ArgoCD training.
     > This is explained in [this article](https://argo-cd.readthedocs.io/en/stable/user-guide/private-repositories/).\
     > It can also be done the declarative way, which is explained in [this article](https://argo-cd.readthedocs.io/en/stable/operator-manual/declarative-setup/#repositories).
 
-    Once done, you can apply the application, which should trigger the deployment of 3 applications (the app-of-apps application and 2 guestbook applications).
+    Once done, you can apply the application, which should trigger the deployment of 2 applications (the 2 guestbook applications).
     ```bash
     kubectl apply -f applications/example-app-of-apps.yaml
     ```
@@ -349,9 +349,9 @@ Repository that holds the contents for an ArgoCD training.
     spec:
       project: developer
       source:
-        repoURL: <YourRepositoryHere>
-        targetRevision: <PathToYourBranch>
-        path: <PathToYourApp>
+        repoURL: https://github.com/argoproj/argocd-example-apps.git
+        targetRevision: master
+        path: guestbook
       destination:
         namespace: example-developer
         name: in-cluster
@@ -375,9 +375,9 @@ Repository that holds the contents for an ArgoCD training.
     spec:
       project: developer
       source:
-        repoURL: <YourRepositoryHere>
-        targetRevision: <PathToYourBranch>
-        path: <PathToYourApp>
+        repoURL: https://github.com/argoproj/argocd-example-apps.git
+        targetRevision: master
+        path: guestbook
       destination:
         namespace: developer-example
         name: in-cluster
@@ -476,9 +476,9 @@ Repository that holds the contents for an ArgoCD training.
     spec:
       project: customer
       source:
-        repoURL: <YourRepositoryHere>
-        targetRevision: <PathToYourBranch>
-        path: <PathToYourApp>
+        repoURL: https://github.com/argoproj/argocd-example-apps.git
+        targetRevision: master
+        path: guestbook
       destination:
         namespace: appset-app
         name: in-cluster

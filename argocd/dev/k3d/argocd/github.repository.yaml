@@ -7,4 +7,4 @@ metadata:
 type: Opaque
 stringData:
   type: git
-  url: https://github.com/fullstaq-labs/argocd-training.git
+  url: https://github.com/Men-io/itq-workshop-argocd.git
