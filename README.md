@@ -47,9 +47,9 @@ Repository that holds the contents for an ArgoCD training.
     ```
 
 5.  If all pods are in the Running state we can proceed.\
-    Now let's check if you can reach ArgoCD ui, which is available at the url https://argocd.localhost
+    Now let's check if you can reach ArgoCD ui, which is available at the url https://argocd.localhost or is available with the port forward url on 8080
 
-    You can login with username **admin** and password **admin**.\
+    You don't have to authenticate, this is disabled for now.
     Once there you should see the following content:
     ![argocd ui](./.docs/argocd-ui.png)
 
@@ -61,6 +61,7 @@ Repository that holds the contents for an ArgoCD training.
     # ArgoCD login command
     argocd login argocd.localhost
     ```
+    But now this is not necessary.
 
     To see all posibilities of the CLI tool just type the following command:
     ```bash
