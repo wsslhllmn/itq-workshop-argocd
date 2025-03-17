@@ -41,15 +41,19 @@ Repository that holds the contents for an ArgoCD training.
     # Check if all pods are running
     kubectl get pods
     ```
+4. If you are running codespaces, make sure you use the following command before you proceed
+    ```bash
+    kubectl port-forward svc/argocd-server -n argocd 8080:443
+    ```
 
-4.  If all pods are in the Running state we can proceed.\
+5.  If all pods are in the Running state we can proceed.\
     Now let's check if you can reach ArgoCD ui, which is available at the url https://argocd.localhost
 
     You can login with username **admin** and password **admin**.\
     Once there you should see the following content:
     ![argocd ui](./.docs/argocd-ui.png)
 
-5.  The UI is one way to interact with ArgoCD.\
+6.  The UI is one way to interact with ArgoCD.\
     Another way is the ArgoCD CLI tool, which could be handy when you need to do some debugging.\
     For this workshop we've enabled using the ArgoCD without logging in.\
     Normally you should use the following command to login:
@@ -119,7 +123,7 @@ Repository that holds the contents for an ArgoCD training.
     Use "argocd [command] --help" for more information about a command.
     ```
 
-6.  Now we've explored the ways to interact, let's start with deploying stuff.\
+7.  Now we've explored the ways to interact, let's start with deploying stuff.\
     There are some core components in ArgoCD, which are very important:
     * Cluster - Defines the cluster and provides credentials to interact with the cluster (provided as a Kubernetes secret with annotations);
     * Repository - Defines the repository credentials for repositories where Kubernetes resources can be deployed from  (provided as a Kubernetes secret with annotations);
@@ -165,7 +169,7 @@ Repository that holds the contents for an ArgoCD training.
     argocd app sync argocd/guestbook
     ```
 
-7.  That's one way to deploy an application, but this is off course not what we want.\
+8.  That's one way to deploy an application, but this is off course not what we want.\
     Because what happens if the cluster breaks and there is no decent back-up of ETCD?!\
     Then all our changes are lost :(\
     Reason is because we've used the imperative instead of declarative way of working.
@@ -209,7 +213,7 @@ Repository that holds the contents for an ArgoCD training.
 
     If you look at the app in ArgoCD, nothing has changed, because you've created the same app.
 
-8.  Then there is the concept of app-of-apps, where one app manages one or more apps.\
+9.  Then there is the concept of app-of-apps, where one app manages one or more apps.\
     One way to this can be found in the contents of [this application](./applications/example-app-of-apps.yaml).\
     Instead of pointing this app to a single app you'll point it to a folder with one or more apps.\
     Also for this case we've provided example code, which looks like:
@@ -251,7 +255,7 @@ Repository that holds the contents for an ArgoCD training.
 
     To check if everything works, please use the ArgoCD CLI of ArgoCD UI.
 
-9.  Untill now we've only managed kubernetes manifest with ArgoCD applications.\
+10. Untill now we've only managed kubernetes manifest with ArgoCD applications.\
     But what about Helm charts? Can these also be managed with ArgoCD?\
     Of course, but the configuration needs to be slightly different.\
     Below is an example of the code:
@@ -285,7 +289,7 @@ Repository that holds the contents for an ArgoCD training.
     If you commit the change to git, the app-of-apps should automatically add the new app to your cluster.
 
 
-10. In the previous exercises we've used a predefined project, which is customer.\
+11. In the previous exercises we've used a predefined project, which is customer.\
     Now we're going to create one of our own!\
     But what can you do with a project?
     * Set boundaries;
@@ -387,7 +391,7 @@ Repository that holds the contents for an ArgoCD training.
     The result you should see is that the failing app won't deploy and the succesfull app will deploy.\
     If you want to learn more about projects, have a look at [this documentation](https://argo-cd.readthedocs.io/en/stable/operator-manual/declarative-setup/#projects).
 
-11. Now it's time to apply a better setup for providing apps.\
+12. Now it's time to apply a better setup for providing apps.\
     This can be achieved by using ApplicationSets, which make the setup even more dynamic.\
     The setup you are using in this training is based on ApplicationSets.\
     Below the contents of the ApplicationSets is shown:
