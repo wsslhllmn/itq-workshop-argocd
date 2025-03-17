@@ -15,7 +15,7 @@ Repository that holds the contents for an ArgoCD training.
      git clone git@github.com:<pathToYourForkedRepo>
      ```
      Open the folder where you've cloned the repo locally in Visual Studio Code and follow the instructions from the image below.\
-     ![instructions local vscode](./.docs/local-vscode.gif)
+     ![instructions local vscode](./.docs/vscode-local.gif)
    * Go to repository you've forked in GitHub and open Codespaces (follow the instructions from the image below).\
         ![instructions remote vscode](./.docs/remote-vscode.gif)
         > [!IMPORTANT]\
@@ -402,7 +402,7 @@ Repository that holds the contents for an ArgoCD training.
       goTemplateOptions: ["missingkey=error"]
       generators:
         - git:
-            repoURL: https://github.com/fullstaq-labs/argocd-training.git
+            repoURL: https://github.com/Men-io/itq-workshop-argocd.git
             revision: feat/improve-training
             directories:
               - path: "*/dev/k3d/*"
