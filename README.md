@@ -193,7 +193,6 @@ Repository that holds the contents for an ArgoCD training.
         path: <PathToYourApp>
       destination:
         namespace: <DestinationNamespace>
-        name: in-cluster
       syncPolicy:
         automated:
           prune: false
@@ -202,10 +201,6 @@ Repository that holds the contents for an ArgoCD training.
 
     First replace the values that are between *angle brackets*.\
     Take a look at the previous question and you should be able to fill these values.
-    > [!Note]\
-    > Note that the value for the destination cluster has changed.\
-    > This refers to the alias which ArgoCD uses to communicate with a cluster.\
-    > On clusters where ArgoCD runs, this is always called in-cluster.
 
     Once you've update the file, you can apply the change with the following command:
     ```bash
@@ -239,6 +234,11 @@ Repository that holds the contents for an ArgoCD training.
           prune: false
           selfHeal: false
     ```
+
+    > [!Note]\
+    > Note that the value for the destination cluster has changed.\
+    > This refers to the alias which ArgoCD uses to communicate with a cluster.\
+    > On clusters where ArgoCD runs, this is always called in-cluster.
 
     Start replacing the values between the *angle brackets* but wait before you apply the changes.\
     You also need to change the contents of the values in [folder app-of-apps](./app-of-apps/).
