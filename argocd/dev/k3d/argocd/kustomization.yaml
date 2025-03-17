@@ -10,7 +10,7 @@ replicas:
 
 resources:
 - namespace.yaml
-- https://github.com/argoproj/argo-cd//manifests/cluster-install?ref=v2.12.6
+- https://github.com/argoproj/argo-cd//manifests/cluster-install?ref=v2.14.5
 - argocd.ingress.yaml
 - github.repository.yaml
 - ./appprojects/
