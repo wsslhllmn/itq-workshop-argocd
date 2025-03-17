@@ -43,7 +43,7 @@ tasks:
         vars:
           PERSONAL_ACCESS_TOKEN_USER: "{{.PERSONAL_ACCESS_TOKEN_USER}}"
           PERSONAL_ACCESS_TOKEN: "{{.PERSONAL_ACCESS_TOKEN}}"
-          ARGOCD_REPO_URL: https://github.com/Men-io/itq-workshop-argocd.git
+          ARGOCD_REPO_URL: https://github.com/fullstaq-labs/argocd-training
           ARGOCD_BOOTSTRAP_DIR: argocd/dev/k3d/argocd
 
   destroy:
