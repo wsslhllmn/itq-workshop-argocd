@@ -101,7 +101,7 @@ tasks:
               labels:
                 argocd.argoproj.io/secret-type: repo-creds
             stringData:
-              url: https://github.com/Men-io/argocd-training.git
+              url: https://github.com/Men-io/itq-workshop-argocd.git
               username: {{.ARGOCD_REPO_ACCESS_TOKEN_USER}}
               password: {{.ARGOCD_REPO_ACCESS_TOKEN}}
           EOF
