@@ -12,6 +12,7 @@ spec:
     path: <PathToYourApp>
   destination:
     namespace: example-namespace
+    name: in-cluster
   syncPolicy:
     automated:
       prune: true

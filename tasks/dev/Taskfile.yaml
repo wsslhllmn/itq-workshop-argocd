@@ -103,7 +103,7 @@ tasks:
       vars:
         - REVISION
     vars:
-      REPO_URL: https://github.com/Men-io/itq-workshop-argocd
+      REPO_URL: https://github.com/Men-io/argocd-training.git
     cmds:
       - cmd: |
           kubectl patch applicationset/customer \

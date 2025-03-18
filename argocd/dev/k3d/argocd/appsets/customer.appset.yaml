@@ -8,7 +8,7 @@ spec:
   goTemplateOptions: ["missingkey=error"]
   generators:
     - git:
-        repoURL: https://github.com/Men-io/itq-workshop-argocd.git
+        repoURL: https://github.com/Men-io/argocd-training.git
         revision: main
         directories:
           - path: "*/dev/k3d/*"
@@ -43,6 +43,6 @@ spec:
             duration: 5s
             factor: 1
       source:
-        repoURL: https://github.com/Men-io/itq-workshop-argocd.git
+        repoURL: https://github.com/Men-io/argocd-training.git
         targetRevision: main
         path: "{{.path.path}}"
