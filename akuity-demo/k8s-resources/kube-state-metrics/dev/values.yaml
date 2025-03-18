@@ -1,0 +1,3 @@
+kube-state-metrics:
+  namespace: codefresh
+  replicas: 3

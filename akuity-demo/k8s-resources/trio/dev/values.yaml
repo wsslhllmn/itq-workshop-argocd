@@ -1,0 +1,15 @@
+buslog:
+  replicaCount: 1
+  image:
+    repository: quay.io/codefresh_sa/buslog
+    tag: "4ed1e59"
+ctrlr:
+  replicaCount: 1
+  image:
+    repository: quay.io/codefresh_sa/ctrlr
+    tag: "2b6d88e"
+flask-ui:
+  replicaCount: 2
+  image:
+    repository: quay.io/codefresh_sa/flask-ui
+    tag: "1b8d478"
