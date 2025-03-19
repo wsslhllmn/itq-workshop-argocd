@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: guestbook-app-of-apps-3
+labels:
+  application: guestbook-app-of-apps-3
+spec:
+  project: customer
+  source:
+    repoURL: https://github.com/argoproj/argocd-example-apps/tree/master/helm-guestbook
+    targetRevision: main
+    path: helm-guestbook
+    helm:
+      valueFiles:
+        - values.yaml
+  destination:
+    namespace: example-namespace-3
+    name: in-cluster
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
