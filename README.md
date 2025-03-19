@@ -2,8 +2,8 @@
 Repository that holds the contents for an ArgoCD training.
 
 ## Steps for the training!
-1.  First step is to open this repository, **[click here](https://github.com/Men-io/itq-workshop-argocd.git)**.\
-    Change in this repository all url's from https://github.com/Men-io/itq-workshop-argocd.git to the URL from the repository you forked (search with **ctrl + shift + f** or **cmd + shift + f**).\
+1.  First step is to open this repository, **[click here](https://github.com/wsslhllmn/itq-workshop-argocd.git)**.\
+    Change in this repository all url's from https://github.com/wsslhllmn/itq-workshop-argocd.git to the URL from the repository you forked (search with **ctrl + shift + f** or **cmd + shift + f**).\
     Start the dev container, which can be done in 2 ways:
 
    * Open GitHub, clone this repo with one of the following commands:
@@ -407,7 +407,7 @@ Repository that holds the contents for an ArgoCD training.
       goTemplateOptions: ["missingkey=error"]
       generators:
         - git:
-            repoURL: https://github.com/Men-io/itq-workshop-argocd.git
+            repoURL: https://github.com/wsslhllmn/itq-workshop-argocd.git
             revision: main
             directories:
               - path: "*/dev/k3d/*"
@@ -442,7 +442,7 @@ Repository that holds the contents for an ArgoCD training.
                 duration: 5s
                 factor: 1
           source:
-            repoURL: https://github.com/Men-io/itq-workshop-argocd.git
+            repoURL: https://github.com/wsslhllmn/itq-workshop-argocd.git
             targetRevision: feat/improve-training
             path: "{{.path.path}}"
     ```

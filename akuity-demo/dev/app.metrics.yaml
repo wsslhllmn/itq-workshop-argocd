@@ -10,7 +10,7 @@ spec:
     namespace: metrics-dev
     name: in-cluster
   source:
-    repoURL: https://github.com/Men-io/itq-workshop-argocd.git
+    repoURL: https://github.com/wsslhllmn/itq-workshop-argocd.git
     targetRevision: main
     path: ./k8s-resources/kube-state-metrics/dev
     helm:

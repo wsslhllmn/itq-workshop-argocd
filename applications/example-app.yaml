@@ -7,9 +7,9 @@ metadata:
 spec:
   project: customer
   source:
-    repoURL: <YourRepositoryHere>
-    targetRevision: <PathToYourBranch>
-    path: <PathToYourApp>
+    repoURL: https://github.com/argoproj/argocd-example-apps.git
+    targetRevision: master
+    path: guestbook
   destination:
     namespace: default
   syncPolicy:

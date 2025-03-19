@@ -7,8 +7,8 @@ metadata:
 spec:
   project: customer
   source:
-    repoURL: <YourForkedRepositoryHere>
-    targetRevision: <PathToYourForkedBranch>
+    repoURL: https://github.com/wsslhllmn/itq-workshop-argocd.git
+    targetRevision: main
     path: app-of-apps
   destination:
     namespace: argocd
