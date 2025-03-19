@@ -11,8 +11,7 @@ spec:
     targetRevision: <PathToYourBranch>
     path: <PathToYourApp>
   destination:
-    namespace: example-namespace
-    name: in-cluster
+    namespace: default
   syncPolicy:
     automated:
       prune: true
